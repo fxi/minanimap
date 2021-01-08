@@ -1,0 +1,452 @@
+import {Timer} from './timer.js';
+//import {validate, betterAjvErrors, schema} from './validate.js';
+import {validate} from './validate.js';
+import {Easing} from './easing.js';
+import {steps} from './steps.js';
+
+const def = {
+  duration_anim: 5000,
+  duration_pause: 0,
+  easing:'easeInOutQuad'
+};
+
+class MinAniMap {
+  constructor(map, steps, opt) {
+    const am = this;
+    am._render = am._render.bind(am);
+    am.next = am.next.bind(am);
+    am.play = am.play.bind(am);
+    am.pause = am.pause.bind(am);
+    am.resume = am.resume.bind(am);
+    am.stop = am.stop.bind(am);
+    //am.getPopupPos = am.getPopupPos.bind(am);
+    //am.lookAtPopup = am.lookAtPopup.bind(am);
+
+    return am.init(map, steps, opt);
+  }
+
+  init(map, steps, opt) {
+    const am = this;
+    return new Promise((resolve, reject) => {
+      if (am.state('destroyed') || am.state('init')) {
+        reject('Invalid init');
+      }
+      am._timer = new Timer();
+      am._map = map;
+      am._on = [];
+      am._state = {};
+      /**
+       * Restore step if needed
+       */
+      const stepsStorage = localStorage.getItem('steps');
+      if (am.validateSteps(stepsStorage)) {
+        steps = stepsStorage;
+      }
+      am.setState('steps', []);
+      am.setState('opt', Object.assign({}, def, opt));
+      am.setState('step_id', -1); // no step, current pos
+      am.setState('destroyed', false);
+      am.setState('playing', false);
+      am.addSteps(steps);
+
+      am._map.on('mousedown', () => {
+        am.pause();
+      });
+
+      if (!am._validate_init()) {
+        reject('Invalid init');
+      }
+      am.setState('init', true);
+      resolve(am);
+    });
+  }
+
+  getOpt(id) {
+    const am = this;
+    const opt = am.state('opt');
+    return opt[id];
+  }
+
+  setState(id, value) {
+    const am = this;
+    am._state[id] = value;
+  }
+
+  getState(id) {
+    const am = this;
+    return am._state ? am._state[id] : null;
+  }
+
+  state(id) {
+    return this.getState(id);
+  }
+
+  //initPopup(){
+  //const am = this;
+  //am._map.on('click', (e) => {
+  //if (am._popup_look_at) {
+  //am._popup_look_at.remove();
+  //}
+  //am._popup_look_at = new mapboxgl.Popup()
+  //.setLngLat(e.lngLat)
+  //.setHTML('<h3>Look at me</>')
+  //.addTo(map);
+  //am.lookAtPopup();
+  //am._map.on('move', am.lookAtPopup);
+
+  //am._popup_look_at.on('close', () => {
+  //am._map.off('move', am.lookAtPopup);
+  //});
+  //});
+  //}
+
+  //getPopupPos() {
+  //const am = this;
+  //const hasLookAtPop = am._popup_look_at && am._popup_look_at.isOpen();
+  //if (hasLookAtPop) {
+  //return am._popup_look_at.getLngLat();
+  //}
+  //}
+
+  //lookAtPopup() {
+  //const am = this;
+  //const lngLat = am.getPopupPos();
+  //if (lngLat) {
+  //const co = am._map.getFreeCameraOptions();
+  //if (!am._map.isMoving()) {
+  //co.lookAtPoint(lngLat);
+  //am._map.setFreeCameraOptions(co);
+  //}
+  //}
+  /*}*/
+
+  on(type, cb) {
+    const am = this;
+    if (type && cb) {
+      am._on.push({type: type, cb: cb});
+    }
+  }
+
+  fire(type, data) {
+    const am = this;
+    am._on.forEach((o) => {
+      if (o.type === type) {
+        o.cb(data);
+      }
+    });
+  }
+
+  _validate_init() {
+    const am = this;
+    const hasMapox = !!window.mapboxgl;
+    const hasMap = hasMapox && am._map instanceof mapboxgl.Map;
+    const hasSteps = am.validateSteps(am.getSteps());
+    return hasMapox && hasMap && hasSteps;
+  }
+
+  validateSteps(steps) {
+    const am = this;
+    steps = am.toSteps(steps);
+    const data = {steps: steps};
+    let valid = validate(data);
+    let msg = '';
+    if (!valid) {
+      msg = validate.errors.reduce((a, c) => {
+        return `${a} \n Invalid param at ${c.dataPath},${
+          c.message
+        }. Details: ( '${JSON.stringify(c.params)}' )`;
+      }, '');
+    } else {
+      msg = 'All good';
+    }
+
+    am.message(msg);
+    return valid;
+  }
+
+  message(m) {
+    this.fire('message', m);
+  }
+
+  addSteps(steps, replace) {
+    const am = this;
+    steps = am.toSteps(steps);
+    const valid = am.validateSteps(steps);
+    if (valid) {
+      const stepsState = am.state('steps');
+      if (replace) {
+        stepsState.length = 0;
+      }
+      stepsState.push(...steps);
+      localStorage.setItem('steps', JSON.stringify(stepsState));
+    }
+  }
+  getSteps() {
+    const am = this;
+    return am.state('steps');
+  }
+  getStep(id) {
+    const am = this;
+    const stepsState = am.state('steps');
+    return stepsState[id || 0];
+  }
+  replaceSteps(steps) {
+    const am = this;
+    am.addSteps(steps, true);
+  }
+
+  toSteps(steps) {
+    const am = this;
+    if (am.isJSON(steps)) {
+      steps = JSON.parse(steps);
+    }
+    if (!Array.isArray(steps)) {
+      steps = [];
+    }
+    return steps;
+  }
+
+  isJSON(str) {
+    let out = false;
+    if (typeof str === 'string') {
+      try {
+        JSON.parse(str);
+        out = true;
+      } catch (e) {}
+    }
+    return out;
+  }
+
+  destroy() {
+    const am = this;
+    am.fire('destroy');
+    am.setState('destroyed', true);
+    am._on.length = 0;
+  }
+
+  getCamPos() {
+    const am = this;
+    const co = am._map.getFreeCameraOptions();
+
+    const lngLat = co.position.toLngLat();
+    const alt = co.position.toAltitude();
+    const pitch = am._map.getPitch();
+    const bearing = am._map.getBearing();
+
+    return {
+      duration_anim: am.getOpt('duration_anim'),
+      duration_pause: am.getOpt('duration_pause'),
+      center: [lngLat.lng, lngLat.lat],
+      altitude: alt,
+      pitch: pitch,
+      easing: am.getOpt('easing'),
+      bearing: bearing
+    };
+  }
+
+  play() {
+    console.log('play');
+    const am = this;
+    if (
+      am.state('playing') ||
+      am.state('destroyed') ||
+      am._state.steps.length === 0
+    ) {
+      am.stop();
+      return;
+    }
+    /**
+     * set playing flag first,
+     * it's used in _render
+     */
+    console.log('Fire play');
+    am.fire('play');
+    am.setState('playing', true);
+    if (am.state('paused')) {
+      console.log('Play: resume');
+      am.resume();
+    } else {
+      console.log('Play: trigger next');
+      am.next();
+    }
+  }
+
+  resume() {
+    const am = this;
+    if (am.state('paused')) {
+      am.setState('paused', false);
+      am._timer.resume();
+      am._render();
+    }
+  }
+
+  pause() {
+    console.log('pause');
+    const am = this;
+    if (!am.state('playing')) {
+      return;
+    }
+    am._timer.pause();
+    am.fire('pause');
+    am.setState('playing', false);
+    am.setState('paused', true);
+  }
+
+  toggle() {
+    const am = this;
+    if (am.state('playing')) {
+      am.pause();
+    } else {
+      am.play();
+    }
+  }
+  stop() {
+    console.log('stop');
+    const am = this;
+    am.fire('stop');
+    am.reset();
+    am.setState('playing', false);
+    am.setState('paused', false);
+  }
+
+  reset() {
+    console.log('reset');
+    const am = this;
+    am.fire('reset');
+    am._step_id = -1; //no step, current pos
+    am._timer.reset();
+  }
+
+  resetSteps() {
+    const am = this;
+    const choice = confirm("Reset steps to default ?  (this can't be undone) ");
+    if (choice) {
+      localStorage.removeItem('steps');
+      am.replaceSteps(steps);
+      am.fire('reset_steps');
+    }
+  }
+
+  removeSteps() {
+    const am = this;
+    const choice = confirm("Remove all steps ?  (this can't be undone) ");
+    if (choice) {
+      localStorage.removeItem('steps');
+      am.replaceSteps([am.getCamPos()]);
+      am.fire('reset_steps');
+    }
+  }
+
+  clear() {
+    console.log('clear');
+    const am = this;
+    am.stop();
+    am._state.steps.length = 0;
+  }
+
+  next() {
+    const am = this;
+    const nBearing = am._map._normalizeBearing;
+    const hasNoId = am._step_id === null || typeof am._step_id === 'undefined';
+    const isLast = am._step_id + 1 >= am._state.steps.length;
+    if (hasNoId || isLast) {
+      am._step_id = -1; //non existing step, use current camera pos
+    }
+    am._step_from = am.getStep(am._step_id) || am.getCamPos();
+    am._step_to = am.getStep(++am._step_id);
+    console.log('Playing step ', am._step_id);
+    am._ease = Easing[am._step_to.easing] || Easing.linear;
+
+    /**
+     * Normalize to avoid crazy full rotation for small angles
+     */
+    if (am._step_from.bearing && am._step_to.bearing) {
+      am._step_to.bearing = nBearing(
+        am._step_to.bearing,
+        am._step_from.bearing
+      );
+    }
+
+    am._timer.lap();
+    am._render();
+  }
+
+  _render() {
+    const am = this;
+    if (!am.state('playing') || am.state('destroyed')) {
+      return;
+    }
+    const elapsed = am._timer.get();
+    const duration_anim = am._step_to.duration_anim;
+
+    if (elapsed < duration_anim) {
+      const percent = am._ease(elapsed / duration_anim);
+      am._animate(percent);
+    }
+    if (elapsed >= duration_anim) {
+      setTimeout(am.next, am._step_to.duration_pause || 0);
+    } else {
+      window.requestAnimationFrame(am._render);
+    }
+  }
+
+  _animate(percent) {
+    const am = this;
+    const step_from = am._step_from;
+    const step_to = am._step_to;
+
+    /**
+     * Interpolations
+     */
+    const position = am._linrp(step_from.center, step_to.center, percent);
+    const altitude = am._linrp(step_from.altitude, step_to.altitude, percent);
+
+    const lookAt = step_from.lookAt
+      ? am._linrp(step_from.lookAt, step_to.lookAt, percent)
+      : null;
+
+    const pitch =
+      !lookAt && step_from.pitch
+        ? am._linrp(step_from.pitch, step_to.pitch, percent)
+        : null;
+
+    const bearing =
+      !lookAt && step_from.bearing
+        ? am._linrp(step_from.bearing, step_to.bearing, percent)
+        : null;
+
+    am._updateCameraPosition(position, altitude, lookAt, pitch, bearing);
+  }
+
+  _linrp(from, to, percent) {
+    if (Array.isArray(from) && Array.isArray(to)) {
+      const out = [];
+      for (let i = 0; i < Math.min(from.length, to.length); i++) {
+        out[i] = from[i] * (1.0 - percent) + to[i] * percent;
+      }
+      return out;
+    } else {
+      return from * (1.0 - percent) + to * percent;
+    }
+  }
+
+  _updateCameraPosition(position, altitude, lookAt, pitch, bearing) {
+    const am = this;
+    const co = am._map.getFreeCameraOptions();
+
+    co.position = window.mapboxgl.MercatorCoordinate.fromLngLat(
+      position,
+      altitude
+    );
+
+    if (lookAt) {
+      co.lookAtPoint(lookAt);
+    } else if (pitch && bearing) {
+      co.setPitchBearing(pitch, bearing);
+    }
+
+    am._map.setFreeCameraOptions(co);
+  }
+}
+
+export {MinAniMap, Timer};

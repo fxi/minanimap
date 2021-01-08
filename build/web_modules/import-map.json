@@ -1,0 +1,7 @@
+{
+  "imports": {
+    "ajv": "./ajv.js",
+    "mapbox-gl": "./mapbox-gl.js",
+    "mapbox-gl/dist/mapbox-gl.css": "./mapbox-gl/dist/mapbox-gl.css"
+  }
+}

@@ -1,0 +1,11 @@
+# Full project: https://gitlab.com/pages/plain-html
+pages:
+  stage: deploy
+  script:
+    - mkdir public
+    - mv build/* public
+  artifacts:
+    paths:
+      - public
+  only:
+    - master
