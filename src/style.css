@@ -106,13 +106,22 @@ body {
   cursor: not-allowed;
 }
 
-.btn-circle:not(.paused) > i.fa-play {
+#btnPlay.btn-circle:not(.paused) > i.fa-play {
   display: none;
 }
 
-.btn-circle.paused > i.fa-pause {
+#btnPlay.btn-circle.paused > i.fa-pause {
   display: none;
 }
+
+#btnRecord.btn-circle:not(.stopped) > i.fa-video {
+  display: none;
+}
+
+#btnRecord.btn-circle.stopped > i.fa-stop {
+  display: none;
+}
+
 
 .panel {
   position: absolute;

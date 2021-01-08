@@ -4,6 +4,7 @@ import './style.css.proxy.js';
 import '../web_modules/mapbox-gl/dist/mapbox-gl.css.proxy.js';
 import {steps} from './steps.js';
 
+
 mapboxgl.accessToken =
   'pk.eyJ1IjoiZnJlZGZ4aSIsImEiOiJja2psOTE5YWgwNm1jMnJxcDhmY25qc2gwIn0.VM7P6iTelL_rFnxTkO7LBQ';
 window.mapboxgl = mapboxgl;
@@ -170,6 +171,8 @@ map.on('load', function () {
  * Elements
  */
 const elBtnPlay = document.getElementById('btnPlay');
+const elBtnRecord = document.getElementById('btnRecord');
+const elBtnDownload = document.getElementById('btnDownload');
 const elBtnEdit = document.getElementById('btnEdit');
 const elBtnDiscard = document.getElementById('btnDiscard');
 const elBtnReset = document.getElementById('btnReset');
@@ -179,7 +182,6 @@ const elEditPanel = document.getElementById('panelEdit');
 const elEditorSteps = document.getElementById('editorSteps');
 const elMsgBox = document.getElementById('msgBox');
 const elSelTheme = document.getElementById('selTheme');
-//const elEditorPosition = document.getElementById('editorPosition');
 
 /**
  * Add Logic
@@ -201,54 +203,41 @@ new MinAniMap(map, steps).then((am) => {
     elBtnEdit.classList.add('hide');
     elEditPanel.classList.remove('show');
   });
+  am.on('pause', () => {
+    elBtnPlay.classList.add('paused');
+    elBtnEdit.classList.remove('hide');
+  });
+ 
+  am.on('record_start', () => {
+    elBtnRecord.classList.remove('stopped');
+    elBtnDownload.classList.add('hide');
+  });
+  
+  am.on('record_end', () => {
+    elBtnRecord.classList.add('stopped');
+    if(am._mp4){
+      elBtnDownload.classList.remove('hide');
+    }
+  });
 
   am.on('reset_steps', () => {
     elEditorSteps.value = JSON.stringify(am.getSteps(), 0, 2);
   });
 
-  am.on('pause', () => {
-    elBtnPlay.classList.add('paused');
-    elBtnEdit.classList.remove('hide');
-  });
-
+  
   /**
    * Buttons
    */
-  elSelTheme.addEventListener('change', (e) => {
-    const theme = e.target.value;
-
-    switch (theme) {
-      case 'sat': {
-        document.body.classList.add('sat');
-        document.body.classList.remove('purple');
-        map.setLayoutProperty('hillshading', 'visibility', 'none');
-        map.setLayoutProperty('elevation', 'visibility', 'none');
-        map.setLayoutProperty('background-purple', 'visibility', 'none');
-        map.setLayoutProperty('sky-purple', 'visibility', 'none');
-
-        map.setLayoutProperty('sat', 'visibility', 'visible');
-        map.setLayoutProperty('background-sat', 'visibility', 'visible');
-        map.setLayoutProperty('sky-sat', 'visibility', 'visible');
-        break;
-      }
-      case 'purple': {
-        document.body.classList.add('purple');
-        document.body.classList.remove('sat');
-        map.setLayoutProperty('hillshading', 'visibility', 'visible');
-        map.setLayoutProperty('elevation', 'visibility', 'visible');
-        map.setLayoutProperty('sat', 'visibility', 'none');
-        map.setLayoutProperty('background-sat', 'visibility', 'none');
-        map.setLayoutProperty('sky-sat', 'visibility', 'none');
-        map.setLayoutProperty('background-purple', 'visibility', 'visible');
-        map.setLayoutProperty('sky-purple', 'visibility', 'visible');
-
-        break;
-      }
-    }
-  });
 
   elBtnPlay.addEventListener('click', () => {
     am.toggle();
+  });
+
+  elBtnRecord.addEventListener('click', () => {
+    am.recordStartStop();
+  });
+elBtnDownload.addEventListener('click', () => {
+    am.recordDownload();
   });
 
   elBtnEdit.addEventListener('click', () => {
@@ -286,6 +275,39 @@ new MinAniMap(map, steps).then((am) => {
       am.replaceSteps(elEditorSteps.value);
     } else {
       elBtnSave.classList.add('disabled');
+    }
+  });
+
+  elSelTheme.addEventListener('change', (e) => {
+    const theme = e.target.value;
+
+    switch (theme) {
+      case 'sat': {
+        document.body.classList.add('sat');
+        document.body.classList.remove('purple');
+        map.setLayoutProperty('hillshading', 'visibility', 'none');
+        map.setLayoutProperty('elevation', 'visibility', 'none');
+        map.setLayoutProperty('background-purple', 'visibility', 'none');
+        map.setLayoutProperty('sky-purple', 'visibility', 'none');
+
+        map.setLayoutProperty('sat', 'visibility', 'visible');
+        map.setLayoutProperty('background-sat', 'visibility', 'visible');
+        map.setLayoutProperty('sky-sat', 'visibility', 'visible');
+        break;
+      }
+      case 'purple': {
+        document.body.classList.add('purple');
+        document.body.classList.remove('sat');
+        map.setLayoutProperty('hillshading', 'visibility', 'visible');
+        map.setLayoutProperty('elevation', 'visibility', 'visible');
+        map.setLayoutProperty('sat', 'visibility', 'none');
+        map.setLayoutProperty('background-sat', 'visibility', 'none');
+        map.setLayoutProperty('sky-sat', 'visibility', 'none');
+        map.setLayoutProperty('background-purple', 'visibility', 'visible');
+        map.setLayoutProperty('sky-purple', 'visibility', 'visible');
+
+        break;
+      }
     }
   });
 });

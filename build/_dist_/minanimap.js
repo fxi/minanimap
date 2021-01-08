@@ -3,11 +3,16 @@ import {Timer} from './timer.js';
 import {validate} from './validate.js';
 import {Easing} from './easing.js';
 import {steps} from './steps.js';
+/**
+ * Local wasm feature detect does nork: need node stuff
+ */
+import {simd} from 'https://unpkg.com/wasm-feature-detect?module';
+import loadEncoder from 'https://unpkg.com/mp4-h264@1.0.7/build/mp4-encoder.js';
 
 const def = {
   duration_anim: 5000,
   duration_pause: 0,
-  easing:'easeInOutQuad'
+  easing: 'easeInOutQuad'
 };
 
 class MinAniMap {
@@ -25,40 +30,136 @@ class MinAniMap {
     return am.init(map, steps, opt);
   }
 
-  init(map, steps, opt) {
+  async init(map, steps, opt) {
     const am = this;
-    return new Promise((resolve, reject) => {
-      if (am.state('destroyed') || am.state('init')) {
-        reject('Invalid init');
-      }
-      am._timer = new Timer();
-      am._map = map;
-      am._on = [];
-      am._state = {};
-      /**
-       * Restore step if needed
-       */
-      const stepsStorage = localStorage.getItem('steps');
-      if (am.validateSteps(stepsStorage)) {
-        steps = stepsStorage;
-      }
-      am.setState('steps', []);
-      am.setState('opt', Object.assign({}, def, opt));
-      am.setState('step_id', -1); // no step, current pos
-      am.setState('destroyed', false);
-      am.setState('playing', false);
-      am.addSteps(steps);
 
-      am._map.on('mousedown', () => {
-        am.pause();
-      });
+    if (am.state('destroyed') || am.state('init')) {
+      throw new Error('Invalid init');
+    }
 
-      if (!am._validate_init()) {
-        reject('Invalid init');
-      }
-      am.setState('init', true);
-      resolve(am);
+    /**
+     * Base
+     */
+    am._timer = new Timer();
+    am._map = map;
+    am._on = [];
+    am._state = {};
+
+    /**
+     * Video encoding
+     */
+    am._supportsSIMD = await simd();
+    am._Encoder = await loadEncoder({simd: am._supportSIMD});
+
+    /**
+     * Restore step if needed
+     */
+    const stepsStorage = localStorage.getItem('steps');
+    if (am.validateSteps(stepsStorage)) {
+      steps = stepsStorage;
+    }
+    am.setState('steps', []);
+    am.setState('opt', Object.assign({}, def, opt));
+    am.setState('step_id', -1); // no step, current pos
+    am.setState('destroyed', false);
+    am.setState('playing', false);
+    am.addSteps(steps);
+
+    am._map.on('mousedown', () => {
+      am.pause();
     });
+
+    if (!am._validate_init()) {
+      throw new Error('Invalid init');
+    }
+
+    am.setState('init', true);
+    return am;
+  }
+
+  recordStartStop() {
+    const am = this;
+    if (am.state('recording')) {
+      am.recordEnd();
+    } else {
+      am.recordStart();
+    }
+  }
+
+  recordStart() {
+    const am = this;
+    am.setState('recording', false);
+    const steps = am.getSteps();
+    const duration = steps.reduce((a, step) => a + step.duration_anime, 0);
+
+    if (duration < 1) {
+      alert('Video too short, better take a screenshot :) ');
+    }
+
+    const sizeMBs = prompt('Select output file size in MB', '100');
+    const fps = prompt('Select frames per second', '30');
+
+    const sizeKilobits = sizeMBs * 8000;
+    const kbps = sizeKilobits / duration;
+
+    am._gl = am._map.painter.context.gl;
+    am._gl_width = am._gl.drawingBufferWidth;
+    am._gl_height = am._gl.drawingBufferHeight;
+
+    am._encoder = am._Encoder.create({
+      width: am._gl_width,
+      height: am._gl_height,
+      fps: fps*1 || 30,
+      kbps: kbps*1 || 800,
+      rgbFlipY: true
+    });
+
+    am._rgb_pointer = am._encoder.getRGBPointer();
+    am.setState('recording', true);
+    am.fire('record_start');
+    am.play();
+  }
+
+  recordEnd() {
+    const am = this;
+    am._mp4 = am._encoder.end();
+    am.setState('recording', false);
+    am.fire('record_end');
+    am.pause();
+  }
+
+  recordFrame() {
+    const am = this;
+    try {
+      const pixels = am._encoder.memory().subarray(am._rgb_pointer);
+      am._gl.readPixels(
+        0,
+        0,
+        am._gl_width,
+        am._gl_height,
+        am._gl.RGBA,
+        am._gl.UNSIGNED_BYTE,
+        pixels
+      );
+      am._encoder.encodeRGBPointer(); // encode the frame
+    } catch (e) {
+      am.recordEnd();
+      alert('Record failed, check console');
+      console.warn(e);
+    }
+  }
+
+  recordDownload() {
+    const am = this;
+    if (am._mp4) {
+      const anchor = document.createElement('a');
+      anchor.href = URL.createObjectURL(
+        new Blob([am._mp4], {type: 'video/mp4'})
+      );
+      anchor.download = 'mapbox-gl';
+      anchor.click();
+      am.fire('video_downloaded');
+    }
   }
 
   getOpt(id) {
@@ -300,6 +401,7 @@ class MinAniMap {
       am.play();
     }
   }
+
   stop() {
     console.log('stop');
     const am = this;
@@ -349,13 +451,25 @@ class MinAniMap {
     const nBearing = am._map._normalizeBearing;
     const hasNoId = am._step_id === null || typeof am._step_id === 'undefined';
     const isLast = am._step_id + 1 >= am._state.steps.length;
+    const isRecording = am.state('recording');
     if (hasNoId || isLast) {
       am._step_id = -1; //non existing step, use current camera pos
     }
+    if (isRecording && isLast) {
+      am.pause();
+      am.recordEnd();
+      return;
+    }
     am._step_from = am.getStep(am._step_id) || am.getCamPos();
     am._step_to = am.getStep(++am._step_id);
+    am._duration_anim = am._step_to.duration_anim;
     console.log('Playing step ', am._step_id);
     am._ease = Easing[am._step_to.easing] || Easing.linear;
+
+    if (isRecording) {
+      am._frame_i = 0;
+      am._frame_n = am._duration_anim / (1000 / 60);
+    }
 
     /**
      * Normalize to avoid crazy full rotation for small angles
@@ -373,18 +487,35 @@ class MinAniMap {
 
   _render() {
     const am = this;
+
     if (!am.state('playing') || am.state('destroyed')) {
       return;
     }
-    const elapsed = am._timer.get();
-    const duration_anim = am._step_to.duration_anim;
+    const isRecording = am.state('recording');
 
-    if (elapsed < duration_anim) {
-      const percent = am._ease(elapsed / duration_anim);
+    const elapsed = isRecording ? am._frame_i++ : am._timer.get();
+    const duration = isRecording ? am._frame_n : am._duration_anim;
+
+    if (elapsed < duration) {
+      const percent = am._ease(elapsed / duration);
       am._animate(percent);
+      if (isRecording) {
+        am.recordFrame();
+      }
     }
-    if (elapsed >= duration_anim) {
-      setTimeout(am.next, am._step_to.duration_pause || 0);
+    if (elapsed >= duration) {
+      /**
+       * Handling pause
+       */
+      if (isRecording) {
+        const pauseDuration = am._step_to.duration_pause / (1000 / 60);
+        for (let i = 0; i < pauseDuration; i++) {
+          am._recordFrame();
+        }
+        am.next();
+      } else {
+        setTimeout(am.next, am._step_to.duration_pause || 0);
+      }
     } else {
       window.requestAnimationFrame(am._render);
     }
