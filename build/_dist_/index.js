@@ -1,286 +1,198 @@
-import mapboxgl from '../web_modules/mapbox-gl.js';
-import {MinAniMap} from './minanimap.js';
-import './style.css.proxy.js';
-import '../web_modules/mapbox-gl/dist/mapbox-gl.css.proxy.js';
-import {steps} from './steps.js';
-
-
-mapboxgl.accessToken =
-  'pk.eyJ1IjoiZnJlZGZ4aSIsImEiOiJja2psOTE5YWgwNm1jMnJxcDhmY25qc2gwIn0.VM7P6iTelL_rFnxTkO7LBQ';
-window.mapboxgl = mapboxgl;
-
-const map = new mapboxgl.Map({
-  container: 'map',
-  style: {
-    version: 8,
-    name: 'studio_is_for_kiddo',
-    center: [6.486133305217123, 46.02544605076176],
-    zoom: 10.84,
-    bearing: 112.79,
-    pitch: 78.5,
-    light: {
-      intensity: 1,
-      color: 'hsl(59, 0%, 100%)',
-      position: [0.9, 0, 0],
-      anchor: 'viewport'
-    },
-    sources: {
-      'mapbox-sat': {
-        url: 'mapbox://mapbox.satellite',
-        type: 'raster',
-        tileSize: 256
-      },
-      'mapbox-dem': {
-        url: 'mapbox://mapbox.terrain-rgb',
-        type: 'raster-dem',
-        tileSize: 256
-      },
-      composite: {
-        url: 'mapbox://mapbox.mapbox-streets-v8,mapbox.mapbox-terrain-v2',
-        type: 'vector'
-      }
-    },
-    sprite:
-      'mapbox://sprites/mapbox-map-design/ckhqrf2tz0dt119ny6azh975y/4snix0v8fnkivnb584t41dzcl',
-    glyphs: 'mapbox://fonts/mapbox-map-design/{fontstack}/{range}.pbf',
-    layers: [
-      {
-        id: 'background-purple',
-        type: 'background',
-        layout: {
-           visibility:'none'
-        },
-        paint: {
-          'background-color': 'hsla(308, 60%, 31%, 0.95)'
-        }
-      },
-      {
-        id: 'background-sat',
-        type: 'background',
-        layout: {
-          visibility: 'visible'
-        },
-        paint: {
-          'background-color': '#ddd'
-        }
-      },
-      {
-        id: 'sat',
-        type: 'raster',
-        source: 'mapbox-sat',
-        layout: {visibility: 'visible'},
-        paint: {}
-      },
-      {
-        id: 'elevation',
-        type: 'fill',
-        source: 'composite',
-        'source-layer': 'contour',
-        layout : {
-          visibility:'none'
-        },
-        paint: {
-          'fill-color': [
-            'interpolate',
-            ['linear'],
-            ['get', 'ele'],
-            0,
-            'hsla(312, 0%, 0%, 0.25)',
-            200,
-            'hsla(312, 0%, 0%, 0.25)',
-            1250,
-            'hsla(308, 60%, 31%, 0.95)',
-            4500,
-            'hsla(308, 65%, 55%, 0.95)'
-          ]
-        }
-      },
-      {
-        id: 'hillshading',
-        type: 'fill',
-        source: 'composite',
-        'source-layer': 'hillshade',
-        layout: {
-          visibility: 'none'
-        },
-        paint: {
-          'fill-color': [
-            'match',
-            ['get', 'class'],
-            'highlight',
-            'rgba(255,255,255,0.1)',
-            'shadow',
-            'rgba(12,12,12,0.2)',
-            'hsla(0, 0%, 0%, 0)'
-          ],
-          'fill-outline-color': 'hsla(0,0,0,0)'
-        }
-      },
-      {
-        id: 'sky-purple',
-        type: 'sky',
-layout: {
-          visibility: 'none'
-        },
-        paint: {
-          'sky-type': 'gradient',
-          'sky-gradient': [
-            'interpolate',
-            ['linear'],
-            ['sky-radial-progress'],
-            0.8,
-            'hsla(308, 76%, 10%, 0.95)',
-            1,
-            'hsla(308, 76%, 31%, 0.95)'
-          ],
-          'sky-gradient-center': [0, 0],
-          'sky-gradient-radius': 90,
-          'sky-opacity': [
-            'interpolate',
-            ['exponential', 0.1],
-            ['zoom'],
-            5,
-            0,
-            22,
-            1
-          ]
-        }
-      },
-      {
-        id: 'sky-sat',
-        type: 'sky',
-        layout: {visibility: 'visible'},
-        paint: {
-          'sky-type': 'atmosphere',
-          'sky-atmosphere-sun': [0.0, 0.0],
-          'sky-atmosphere-sun-intensity': 15
-        }
-      }
-    ]
-  }
-});
-
-map.on('load', function () {
-  map.setTerrain({
-    source: 'mapbox-dem',
-    exaggeration: 1.5
-  });
-});
+/**
+ * MinAniMap sample app.
+ */
+import {MinAniMap} from './minanimap/index.js';
+import {FlashIcon} from './flashicon/index.js';
+import './style/minanimap.css.proxy.js';
+import './style/banner_github.css.proxy.js';
+import {map} from './map.js';
 
 /**
  * Elements
  */
-const elBtnPlay = document.getElementById('btnPlay');
-const elBtnRecord = document.getElementById('btnRecord');
+
+/* recording */
+const elBtnRecording = document.getElementById('btnRecording');
+const elBtnStopRecording = document.getElementById('btnStopRecording');
 const elBtnDownload = document.getElementById('btnDownload');
+const elContainerProgressRecording = document.getElementById(
+  'progressRecordingContainer'
+);
+const elMsgBoxProgressRecording = document.getElementById(
+  'msgBoxProgressRecording'
+);
+
+const elBtnCloseRecording = document.getElementById('btnCloseRecording');
+
+/* playing */
+const elBtnPlay = document.getElementById('btnPlay');
+const elBtnNext = document.getElementById('btnNext');
+const elBtnPrevious = document.getElementById('btnPrevious');
+const elSliderFrame = document.getElementById('sliderFrame');
+/* edit */
 const elBtnEdit = document.getElementById('btnEdit');
 const elBtnDiscard = document.getElementById('btnDiscard');
 const elBtnReset = document.getElementById('btnReset');
 const elBtnAddStep = document.getElementById('btnAddStep');
-const elBtnSave = document.getElementById('btnSave');
-const elEditPanel = document.getElementById('panelEdit');
+const elBtnCopyUrl = document.getElementById('btnCopyUrl');
+const elPanel = document.getElementById('panelEdit');
 const elEditorSteps = document.getElementById('editorSteps');
-const elMsgBox = document.getElementById('msgBox');
+const elEditorVideo = document.getElementById('editorVideo');
+const elMsgBoxValidationVideo = document.getElementById(
+  'msgBoxValidationVideo'
+);
+const elMsgBoxValidationSteps = document.getElementById(
+  'msgBoxValidationSteps'
+);
+const elMsgBoxAutoSave = document.getElementById('msgBoxAutoSave');
 const elSelTheme = document.getElementById('selTheme');
 
 /**
- * Add Logic
+ * Setup minanimap
  */
-new MinAniMap(map, steps).then((am) => {
+const url = new URL(document.location);
+const stateOrig = JSON.parse(url.searchParams.get('state'));
+
+new MinAniMap(map, stateOrig).then((am) => {
   top.am = am;
 
   elEditorSteps.value = JSON.stringify(am.getSteps(), 0, 2);
+  elEditorVideo.value = JSON.stringify(am.getVideoConfig(), 0, 2);
+
+  /*
+  * Render initial frame
+  */
+  am.render(0);
 
   /**
    * MinAniMap Events
    */
   am.on('message', (msg) => {
-    elMsgBox.innerHTML = msg;
+    switch (msg.type) {
+      case 'recording_progress':
+        elMsgBoxProgressRecording.innerText = `${msg.text}`;
+        break;
+      case 'validate-steps':
+        elMsgBoxValidationSteps.innerText = msg.text;
+        break;
+      case 'validate-video-config':
+        elMsgBoxValidationVideo.innerText = msg.text;
+        break;
+      default:
+        console.log(msg);
+    }
   });
 
+  am.on('play_previous', () => {
+    new FlashIcon('step-backward');
+  });
   am.on('play', () => {
     elBtnPlay.classList.remove('paused');
-    elBtnEdit.classList.add('hide');
-    elEditPanel.classList.remove('show');
+    new FlashIcon('play');
   });
   am.on('pause', () => {
     elBtnPlay.classList.add('paused');
-    elBtnEdit.classList.remove('hide');
+    new FlashIcon('pause');
   });
- 
-  am.on('record_start', () => {
-    elBtnRecord.classList.remove('stopped');
+  am.on('play_next', () => {
+    new FlashIcon('step-forward');
+  });
+
+  am.on('recording_start', () => {
+    am.pause();
+    elContainerProgressRecording.classList.remove('hide');
+    elContainerProgressRecording.classList.add('recording');
+    elBtnStopRecording.classList.remove('hide');
     elBtnDownload.classList.add('hide');
+    elBtnCloseRecording.classList.add('hide');
   });
-  
-  am.on('record_end', () => {
-    elBtnRecord.classList.add('stopped');
-    if(am._mp4){
+
+  am.on('recording_end', () => {
+    elBtnStopRecording.classList.add('hide');
+    elBtnCloseRecording.classList.remove('hide');
+    elContainerProgressRecording.classList.remove('recording');
+    if (am._mp4) {
       elBtnDownload.classList.remove('hide');
     }
   });
 
-  am.on('reset_steps', () => {
+  am.on('steps_reset', () => {
     elEditorSteps.value = JSON.stringify(am.getSteps(), 0, 2);
+    new FlashIcon('undo');
   });
+  am.on('steps_removed', () => {
+    elEditorSteps.value = JSON.stringify(am.getSteps(), 0, 2);
+    new FlashIcon('trash');
+  });
+  am.on('steps_updated', () => {
+    elMsgBoxAutoSave.innerText = `Saved at ${new Date().toLocaleString()}`;
+    const newSteps = am.getSteps();
+    const oldSteps = elEditorSteps.value;
+    /**
+     * Do not update if there is only
+     * formating changes.
+     */
+    if (am.equivObject(oldSteps, newSteps)) {
+      return;
+    }
+    elEditorSteps.value = JSON.stringify(newSteps, 0, 2);
+  });
+  am.on('pre_rendered', (v)=>{
+    elSliderFrame.min = 0;
+    elSliderFrame.max = v.nFrames;
+  })
+  am.on('render', (id)=>{
+    elSliderFrame.value = id;
+  })
 
-  
   /**
    * Buttons
    */
 
-  elBtnPlay.addEventListener('click', () => {
-    am.toggle();
+  /*recording*/
+  elBtnRecording.addEventListener('click', am.recordingStart);
+  elBtnDownload.addEventListener('click', am.recordingDownload);
+  elBtnCloseRecording.addEventListener('click', () => {
+    elContainerProgressRecording.classList.add('hide');
+    am.recordingEnd();
+  });
+  elBtnStopRecording.addEventListener('click', () => {
+    am.recordingEnd();
   });
 
-  elBtnRecord.addEventListener('click', () => {
-    am.recordStartStop();
+  /*playing*/
+  elBtnPlay.addEventListener('click', am.toggle);
+  elBtnNext.addEventListener('click', am.nextStep);
+  elBtnPrevious.addEventListener('click', am.previousStep);
+  elSliderFrame.addEventListener('input', ()=>{
+    am.cancelRender();
+    am.render(elSliderFrame.value*1||0);
+  })
+  /* edit */
+  elBtnAddStep.addEventListener('click', ()=>{
+    am.addStepFromHere();
+    new FlashIcon('save');
   });
-elBtnDownload.addEventListener('click', () => {
-    am.recordDownload();
-  });
-
+  elBtnDiscard.addEventListener('click', am.removeSteps);
+  elBtnReset.addEventListener('click', am.resetSteps);
   elBtnEdit.addEventListener('click', () => {
-    elEditPanel.classList.toggle('show');
+    elPanel.classList.toggle('show');
   });
 
-  elBtnAddStep.addEventListener('click', () => {
-    const step = am.getCamPos();
-    const steps = am.toSteps(elEditorSteps.value);
-    steps.push(step);
-    elEditorSteps.value = JSON.stringify(steps, 0, 2);
-    elEditorSteps.scrollTop = elEditorSteps.scrollHeight;
-    elEditorSteps.dispatchEvent(new Event('input'));
-  });
-
-  elBtnSave.addEventListener('click', () => {
-    am.replaceSteps(elEditorSteps.value);
-  });
-
-  elBtnDiscard.addEventListener('click', () => {
-    am.removeSteps();
-  });
-
- elBtnReset.addEventListener('click', () => {
-    am.resetSteps();
+  elBtnCopyUrl.addEventListener('click', () => {
+    am.urlCopy();
+    new FlashIcon('clipboard');
   });
 
   elEditorSteps.addEventListener('input', () => {
-    const valid = am.validateSteps(elEditorSteps.value);
-    if (valid) {
-      elBtnSave.classList.remove('disabled');
-      /**
-       * Autosave
-       */
-      am.replaceSteps(elEditorSteps.value);
-    } else {
-      elBtnSave.classList.add('disabled');
-    }
+    am.replaceSteps(elEditorSteps.value);
+  });
+  elEditorVideo.addEventListener('input', () => {
+    am.setVideoConfig(elEditorVideo.value);
   });
 
   elSelTheme.addEventListener('change', (e) => {
     const theme = e.target.value;
-
     switch (theme) {
       case 'sat': {
         document.body.classList.add('sat');
@@ -305,7 +217,6 @@ elBtnDownload.addEventListener('click', () => {
         map.setLayoutProperty('sky-sat', 'visibility', 'none');
         map.setLayoutProperty('background-purple', 'visibility', 'visible');
         map.setLayoutProperty('sky-purple', 'visibility', 'visible');
-
         break;
       }
     }

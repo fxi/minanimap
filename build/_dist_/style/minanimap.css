@@ -1,0 +1,323 @@
+@import "https://fonts.googleapis.com/css2?family=Space+Mono&display=swap";
+@import "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css";
+
+/** NOTE:Style built with less, but snowpack had issues importing it. Compiled css version..   */
+
+/* Base and themes  */
+body.purple * {
+  --ui_bg_color: hsla(308, 60%, 20%, 0.95);
+  --ui_bg_color_transparent: hsla(308, 60%, 20%, 0.4);
+  --ui_fg_color: hsla(308, 60%, 80%, 0.95);
+  --ui_editor_fg_color: hsla(308, 60%, 80%, 0.95);
+  --ui_editor_bg_color: hsl(308, 46%, 37%, 0.55);
+  --ui_outline: hsla(308, 60%, 90%, 0.95);
+  --ui_border_color: hsl(308deg 45% 35% / 91%);
+  --ui_button_color: hsl(308deg 67% 33% / 53%);
+}
+body.sat * {
+  --ui_bg_color: hsl(174deg 4% 46%);
+  --ui_bg_color_transparent: hsla(174, 4%, 46%, 0.4);
+  --ui_fg_color: hsl(308deg 21% 91% / 95%);
+  --ui_editor_fg_color: hsl(0deg 0% 94% / 95%);
+  --ui_editor_bg_color: hsl(0deg 0% 60% / 63%);
+  --ui_outline: hsl(0deg 0% 45% / 36%);
+  --ui_border_color: hsl(308deg 1% 29% / 91%);
+  --ui_button_color: hsl(308deg 12% 14% / 53%);
+}
+
+* {
+  font-family: 'Space Mono', monospace;
+  color: var(--ui_fg_color);
+  outline-color: var(--ui_outline);
+}
+
+html,
+body {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+/* Gridded / checkker baord background  */
+body {
+  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAANJwAADScBQwZj3AAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAAmSURBVBiVY2TAAp49e/YfXYwJm0JsYAAVMmJzuJSUFCPtraa+QgDLYwfEbRLGHgAAAABJRU5ErkJggg==');
+  background-size: 10px 10px;
+  background-position: 0 0, 5px 0, 5px -5px, 0px 5px;
+}
+
+/* Generic hide / show stuff  */
+.hide {
+  display: none !important;
+  pointer-events: none !important;
+}
+.show {
+  display: flex !important;
+  pointer-events: auto !important;
+}
+
+/* Buttons */
+.btns {
+  display: flex;
+  flex-grow: 0;
+  z-index: 10;
+  pointer-events: none;
+  justify-content: center;
+  padding: 10px;
+}
+.btns-config {
+  justify-content: flex-start;
+}
+.group-top {
+  padding: 10px;
+  position: absolute;
+  top: 0;
+  justify-content: flex-start;
+}
+.group-bottom {
+  padding: 10px;
+  bottom: 18px;
+  position: absolute;
+  width: calc(100% - 20px);
+  z-index: 2;
+}
+#btns-ctrl {
+  justify-content: center;
+}
+.btn-circle {
+  margin: 5px;
+  cursor: pointer;
+  pointer-events: auto;
+  width: 50px;
+  height: 50px;
+  color: var(--ui_fg_color);
+  border: 1px solid var(--ui_border_color);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--ui_button_color);
+}
+.btn-circle:hover {
+  transform: scale(1.1);
+}
+.btn-circle.disabled {
+  opacity: 0.3;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+#btnPlay.btn-circle:not(.paused) > i.fa-play {
+  display: none;
+}
+#btnPlay.btn-circle.paused > i.fa-pause {
+  display: none;
+}
+#btnRecord.btn-circle:not(.stopped) > i.fa-video {
+  display: none;
+}
+#btnRecord.btn-circle.stopped > i.fa-stop {
+  display: none;
+}
+
+/* Main edition panel  */
+.panel-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 40px;
+  overflow: hidden;
+  display: flex;
+  justify-content: flex-start;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+.panel-container > .panel {
+  transform-origin: top left;
+  width: 400px;
+  height: fit-content;
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background-color: var(--ui_bg_color);
+  padding: 3px;
+  margin: 3px;
+  display: flex;
+  flex-direction: column;
+  opacity: 0.4;
+  box-sizing: border-box;
+  touch-action: none;
+  border: 1px solid var(--ui_border_color);
+  border-radius: 5px;
+  transition: transform ease-in-out 200ms, opacity ease-in-out 200ms;
+}
+.panel-container > .panel:hover {
+  opacity: 1;
+}
+.panel-container > .panel .code {
+  background-color: var(--ui_editor_bg_color);
+  border: none;
+  border-radius: 3px;
+  color: var(--ui_editor_fg_color);
+  font-family: 'Space Mono', monospace;
+  margin: 5px;
+  width: 100%;
+  max-height: 400px;
+  resize: vertical;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.panel-container > .panel .config {
+  padding: 10px;
+}
+.panel-container > .panel .config summary {
+  cursor: pointer;
+}
+.panel-container > .panel .editor-container {
+  display: flex;
+  flex-direction: column;
+}
+.panel-container > .panel .editor-group {
+  display: flex;
+  flex-direction: column;
+  padding: 5px;
+  margin: 5px;
+  border-bottom: 1px solid var(--ui_border_color);
+}
+/*@media only screen and (max-width: 800px) {*/
+/*.panel .editor-container {*/
+/*flex-wrap: wrap-reverse;*/
+/*}*/
+/*.panel .editor-group {*/
+/*width: 100%;*/
+/*}*/
+/*}*/
+
+/* Recording panel */
+
+.progress-recording--container {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  top: 0px;
+  left: 0px;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+  transition: backdrop-filter ease-in-out 200ms;
+}
+.progress-recording--container.recording {
+  backdrop-filter: blur(100px);
+  background-color: var(--ui_bg_color_transparent);
+}
+.progress-recording--container.hide {
+  display: none;
+}
+.progress-recording--container > .progress-recording--content {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  border-radius: 10px;
+  background-color: var(--ui_bg_color_transparent);
+  padding: 40px;
+}
+
+/*Forms  */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-left: 10px;
+}
+.form-group select {
+  background: var(--ui_button_color);
+  color: var(--ui_fg_color);
+  border-color: var(--ui_border_color);
+  padding: 5px;
+}
+.msg-box {
+  font-size: small;
+  padding-left: 10px;
+  padding-right: 10px;
+  overflow-wrap: anywhere;
+}
+
+/* Map and mpabox gl */
+.am .mapboxgl-ctrl-logo {
+  filter: opacity(0.5);
+}
+.am .mapboxgl-ctrl.mapboxgl-ctrl-attrib {
+  background-color: var(--ui_border_color);
+}
+#map {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+/** 
+* Input range
+* Initial css done with http://danielstern.ca/range.css/#/
+*/
+
+input[type='range'] {
+  width: 100%;
+  margin: 5.15px 0;
+  background-color: transparent;
+  -webkit-appearance: none;
+}
+input[type='range']:focus {
+  outline: none;
+}
+input[type='range']::-webkit-slider-runnable-track {
+  background: var(--ui_button_color);
+  border: 2px solid var(--ui_border_color);
+  border-radius: 13px;
+  width: 100%;
+  height: 25.7px;
+  cursor: pointer;
+}
+input[type='range']::-webkit-slider-thumb {
+  margin-top: -7.15px;
+  width: 36px;
+  height: 36px;
+  background: var(--ui_fg_color);
+  border: 2px solid var(--ui_border_color);
+  border-radius: 43px;
+  cursor: pointer;
+  -webkit-appearance: none;
+}
+input[type='range']:focus::-webkit-slider-runnable-track {
+  background: var(--ui_button_color);
+}
+input[type='range']::-moz-range-track {
+  background: rgba(169, 170, 169, 0.78);
+  border: 2px solid var(--ui_border_color);
+  border-radius: 13px;
+  width: 100%;
+  height: 25.7px;
+  cursor: pointer;
+}
+input[type='range']::-moz-range-thumb {
+  width: 36px;
+  height: 36px;
+  background: var(--ui_fg_color);
+  border: 2px solid var(--ui_border_color);
+  border-radius: 43px;
+  cursor: pointer;
+}

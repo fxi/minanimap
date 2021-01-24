@@ -2,12 +2,26 @@
   "title": "minanimap",
   "type": "object",
   "additionalProperties": false,
-  "required": ["steps"],
   "properties": {
+    "video_config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["preset", "orientation"],
+      "properties": {
+        "preset": {
+          "type": "string",
+          "enum": ["2160p", "1440p", "1080p", "720p", "480p", "360p"]
+        },
+        "orientation": {
+          "type": "string",
+          "enum": ["landscape", "portrait"]
+        } 
+      }
+    },
     "steps": {
       "type": "array",
       "title": "Steps",
-      "minItems":1,
+      "minItems": 1,
       "items": {
         "type": "object",
         "title": "Step",
@@ -70,6 +84,12 @@
             ],
             "minItems": 2,
             "maxItems": 2
+          },
+          "_frame_start": {
+            "type": "number"
+          },
+          "_frame_end": {
+            "type": "number"
           }
         }
       }
