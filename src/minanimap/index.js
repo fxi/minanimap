@@ -8,7 +8,7 @@ import {validate} from './validate.js';
 import {Easing} from './easing.js';
 import {state, presets} from './settings.js';
 /**
- * Remote modules. 
+ * Remote modules.
  */
 import {simd} from 'https://unpkg.com/wasm-feature-detect?module';
 import loadEncoder from 'https://unpkg.com/mp4-h264@1.0.7/build/mp4-encoder.js';
@@ -32,12 +32,12 @@ class MinAniMap {
       throw new Error('Ignore init');
     }
     opt = Object.assign({}, opt);
-    
+
     /**
      * Refs
      */
-    am._map = map; 
-    am._on = []; 
+    am._map = map;
+    am._on = [];
     am._state = {};
     am._flags = {};
     am._frames = [];
@@ -296,47 +296,55 @@ class MinAniMap {
   /**
    * Manage secondary map (for recording );
    */
-  updateRecordingMap() {
+  async updateRecordingMap() {
+    const am = this;
+    const config = am.getVideoConfig();
+    if (!am._map_recording) {
+      am._el_recording = document.createElement('div');
+      am._map_recording = new mapboxgl.Map({
+        container: am._el_recording
+      });
+    }
+    /*
+     * width, height
+     */
+    am._preset = presets.find((r) => r.id === config.preset);
+    const dim = am._preset.dim;
+    /**
+     * Transfert style
+     */
+    const style = am._map.getStyle();
+    am._map_recording.setStyle(style);
+
+    /**
+     * Set orientation
+     */
+    if (config.orientation === 'portrait') {
+      dim.reverse();
+    }
+
+    /*
+     * Define non-visible canvas
+     * Container should be added to dom : map.resize need that...
+     * -> its removed short after
+     */
+    const dpr = window.devicePixelRatio;
+    am._el_recording.style.width = dim[0] / dpr + 'px';
+    am._el_recording.style.height = dim[1] / dpr + 'px';
+    am._el_recording.style.zIndex = -1;
+    document.body.appendChild(am._el_recording);
+    am._map_recording.resize();
+    await am.waitRecMapIdle();
+    am._el_recording.remove();
+  }
+
+  waitRecMapIdle() {
+    const am = this;
     return new Promise((resolve) => {
-      const am = this;
-      const config = am.getVideoConfig();
       if (!am._map_recording) {
-        am._el_recording = document.createElement('div');
-        am._map_recording = new mapboxgl.Map({
-          container: am._el_recording
-        });
+        resolve(true);
       }
-      /*
-       * width, height
-       */
-      am._preset = presets.find((r) => r.id === config.preset);
-      const dim = am._preset.dim;
-      /**
-       * Transfert style
-       */
-      const style = am._map.getStyle();
-      am._map_recording.setStyle(style);
-
-      /**
-       * Set orientation
-       */
-      if (config.orientation === 'portrait') {
-        dim.reverse();
-      }
-
-      /*
-       * Define non-visible canvas
-       * Container should be added to dom : map.resize need that...
-       * -> its removed short after
-       */
-      const dpr = window.devicePixelRatio;
-      am._el_recording.style.width = dim[0] / dpr + 'px';
-      am._el_recording.style.height = dim[1] / dpr + 'px';
-      am._el_recording.style.zIndex = -1;
-      document.body.appendChild(am._el_recording);
-      am._map_recording.resize();
       am._map_recording.on('idle', () => {
-        am._el_recording.remove();
         resolve(true);
       });
     });
@@ -662,10 +670,13 @@ class MinAniMap {
         }
       }
     }
-    am.fire('pre_rendered', {nFrames: am._frames.length, idFrame:am._frame_id});
+    am.fire('pre_rendered', {
+      nFrames: am._frames.length,
+      idFrame: am._frame_id
+    });
   }
 
-  render(id) {
+  async render(id) {
     const am = this;
     const max = am._frames.length - 1;
 
@@ -692,7 +703,7 @@ class MinAniMap {
     am._update_camera_position(am._frame);
 
     if (am.is('recording')) {
-      am.recordingFrame();
+      await am.recordingFrame();
       am.message({
         type: 'recording_progress',
         text: `${am._frame_id}/${max}`,
@@ -703,7 +714,7 @@ class MinAniMap {
     if (am.is('playing')) {
       am._id_render_frame = requestAnimationFrame(() => am.render());
     }
-    am.fire('render',am._frame_id)
+    am.fire('render', am._frame_id);
   }
 
   validFrameId(id) {
@@ -826,15 +837,15 @@ class MinAniMap {
       type: 'recording_progress',
       text: 'Recording finished'
     });
-
   }
 
-  recordingFrame() {
+  async recordingFrame() {
     const am = this;
     if (!am.is('recording')) {
       return;
     }
     try {
+      await am.waitRecMapIdle();
       const pixels = am._encoder.memory().subarray(am._rgb_pointer);
       am._gl.readPixels(
         0,
@@ -908,8 +919,8 @@ class MinAniMap {
   /**
    * JSON parse if needed, with default in case of error
    *
-   * @param {Object|String} data  Input object or string 
-   * ®return {Object} object or default 
+   * @param {Object|String} data  Input object or string
+   * ®return {Object} object or default
    */
   normalizeObject(data, def = []) {
     if (typeof data === 'string') {
@@ -924,17 +935,17 @@ class MinAniMap {
   }
 
   /**
-   * Object clone using JSON stringify/parse 
+   * Object clone using JSON stringify/parse
    *
-   * @param {Object} obj Input object. 
-   * ®return {Object} cloned object 
+   * @param {Object} obj Input object.
+   * ®return {Object} cloned object
    */
   cloneObject(obj) {
     return JSON.parse(JSON.stringify(obj));
   }
 
   /**
-   * Simple check for object equality. 
+   * Simple check for object equality.
    *
    * @param {Object|Sring} a Input a
    * @param {Object|Sring} b Input b
@@ -948,9 +959,9 @@ class MinAniMap {
   }
 
   /**
-  * Bind all methods. 
-  * @return null
-  */
+   * Bind all methods.
+   * @return null
+   */
   bindAll() {
     const am = this;
     Object.getOwnPropertyNames(Object.getPrototypeOf(am)).map((k) => {
