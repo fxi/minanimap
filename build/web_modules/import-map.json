@@ -1,6 +1,8 @@
 {
   "imports": {
     "@fxi/el": "./@fxi/el.js",
+    "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css": "./@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css",
+    "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min.js": "./@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min.js",
     "ajv": "./ajv.js",
     "copy-text-to-clipboard": "./copy-text-to-clipboard.js",
     "mapbox-gl": "./mapbox-gl.js",

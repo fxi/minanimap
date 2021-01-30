@@ -479,8 +479,13 @@ class MinAniMap {
       center: [lngLat.lng, lngLat.lat],
       altitude: alt,
       pitch: pitch,
+      bearing: bearing,
       easing: step_config.easing,
-      bearing: bearing
+      easing_pitch: step_config.easing,
+      easing_bearing: step_config.easing,
+      easing_center: step_config.easing,
+      easing_lookAt: step_config.easing,
+      easing_altitude : step_config.easing
     };
     return Object.assign({}, step, config);
   }
@@ -595,6 +600,13 @@ class MinAniMap {
       const step_from = am._steps[i];
       const step_to = am._steps[i + 1];
       const easing = Easing[step_to.easing] || Easing.linear;
+      const easingCenter = Easing[step_to.easing_center] || easing;
+      const easingBearing = Easing[step_to.easing_bearing] || easing;
+      const easingPitch = Easing[step_to.easing_pitch] || easing ;
+      const easingAltitude = Easing[step_to.easing_altitude] || easing;
+      const easingLookAt = Easing[step_to.easing_lookAt] || easing;
+
+
       const tAnim = step_to.duration_anim;
       const tPause = step_to.duration_pause;
       const nFrameAnim = tAnim / (1000 / 60);
@@ -621,28 +633,38 @@ class MinAniMap {
        * Frame loop
        */
       for (let j = 0; j < nFrame; j++) {
-        const percent = easing(j / nFrame);
-        const position = am._linrp(step_from.center, step_to.center, percent);
+        const percent = j / nFrame;
+        
+        const position = am._linrp({
+          from : step_from.center, 
+          to : step_to.center, 
+          percent : easingCenter(percent)
+        });
 
-        const altitude = am._linrp(
-          step_from.altitude,
-          step_to.altitude,
-          percent
-        );
+        const altitude = am._linrp({
+          from: step_from.altitude,
+          to : step_to.altitude,
+          percent : easingAltitude(percent)
+        });
 
         const lookAt = step_from.lookAt
-          ? am._linrp(step_from.lookAt, step_to.lookAt, percent)
+          ? am._linrp({
+            from : step_from.lookAt, 
+            to : step_to.lookAt, 
+            percent : easingLookAt(percent)
+          })
           : null;
 
-        const pitch =
-          !lookAt && step_from.pitch
-            ? am._linrp(step_from.pitch, step_to.pitch, percent)
-            : null;
+        const pitch = ! lookAt ? am._linrp({
+          from: step_from.pitch,
+          to : step_to.pitch, 
+          percent: easingPitch(percent)
+        }) : null;
 
-        const bearing =
-          !lookAt && step_from.bearing
-            ? am._linrp(step_from.bearing, step_to.bearing, percent)
-            : null;
+        const bearing = ! lookAt ? am._linrp({
+          from: step_from.bearing,
+          to : step_to.bearing, percent:easingBearing(percent) 
+        }): null;
         /*
          * Create 'frame' parameters
          */
@@ -678,22 +700,19 @@ class MinAniMap {
 
   async render(id) {
     const am = this;
-    const max = am._frames.length - 1;
+    const n = am._frames.length;
 
-    if (max <= 0) {
-      return console.warn('No frames to render');
+    if ( n === 0 ) {
+      return ;
     }
 
-    if (am.validFrameId(id)) {
-      am._frame_id = id % max;
+    if (am.validFrameId(id,n)) {
+      am._frame_id = id % n;
     } else {
-      /*
-       * loop ? am._frame_id = am._frame_id + (1 % max);
-       */
       am._frame_id = am._frame_id + 1;
     }
 
-    if (!am.validFrameId(am._frame_id)) {
+    if (!am.validFrameId(am._frame_id,n)) {
       am.stop();
       return;
     }
@@ -706,9 +725,9 @@ class MinAniMap {
       await am.recordingFrame();
       am.message({
         type: 'recording_progress',
-        text: `${am._frame_id}/${max}`,
+        text: `${am._frame_id}/${n-1}`,
         i: am._frame_id,
-        n: max
+        n: n-1
       });
     }
     if (am.is('playing')) {
@@ -717,10 +736,8 @@ class MinAniMap {
     am.fire('render', am._frame_id);
   }
 
-  validFrameId(id) {
-    const am = this;
-    const n = am._frames.length;
-    return Number.isInteger(id) && id >= 0 && am._frame_id < n;
+  validFrameId(id,n) {
+    return Number.isInteger(id) && id >= 0 && id <= n - 1;
   }
 
   /**
@@ -881,15 +898,15 @@ class MinAniMap {
    * Helpers
    */
 
-  _linrp(from, to, percent) {
-    if (Array.isArray(from) && Array.isArray(to)) {
+  _linrp(o) {
+    if (Array.isArray(o.from) && Array.isArray(o.to)) {
       const out = [];
-      for (let i = 0; i < Math.min(from.length, to.length); i++) {
-        out[i] = from[i] * (1.0 - percent) + to[i] * percent;
+      for (let i = 0; i < Math.min(o.from.length, o.to.length); i++) {
+        out[i] = o.from[i] * (1.0 - o.percent) + o.to[i] * o.percent;
       }
       return out;
     } else {
-      return from * (1.0 - percent) + to * percent;
+      return o.from * (1.0 - o.percent) + o.to * o.percent;
     }
   }
 

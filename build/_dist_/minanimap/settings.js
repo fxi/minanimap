@@ -1,5 +1,6 @@
 import storyTenke from './stories/tenke_001.json.proxy.js';
 import storyAlpine from './stories/alpine_001.json.proxy.js';
+import storySarychev from './stories/sarychev_001.json.proxy.js';
 
 /**
  * Default state
@@ -7,7 +8,7 @@ import storyAlpine from './stories/alpine_001.json.proxy.js';
 const step_config = {
   duration_anim: 5000,
   duration_pause: 0,
-  easing: 'easeInOutQuad'
+  easing: 'linear'
 };
 
 const video_config = {
@@ -17,7 +18,7 @@ const video_config = {
 
 const step_id = 0;
 const init = false;
-const steps = storyAlpine.steps;
+const steps = storySarychev.steps;
 const state = {init, steps, step_id, video_config, step_config};
 
 /**

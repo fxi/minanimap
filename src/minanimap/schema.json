@@ -1,7 +1,30 @@
 {
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "minanimap",
   "type": "object",
   "additionalProperties": false,
+  "definitions": {
+    "easing ": {
+      "$id": "#easing",
+      "type": "string",
+      "enum": [
+        "linear",
+        "easeInQuad",
+        "easeOutQuad",
+        "easeInOutQuad",
+        "easeInCubic",
+        "easeOutCubic",
+        "easeInOutCubic",
+        "easeInQuart",
+        "easeOutQuart",
+        "easeInOutQuart",
+        "easeInQuint",
+        "easeOutQuint",
+        "easeInOutQuint"
+      ],
+      "default": "easeInOutQuad"
+    }
+  },
   "properties": {
     "video_config": {
       "type": "object",
@@ -51,30 +74,16 @@
           "altitude": {
             "type": "number"
           },
-          "easing": {
-            "type": "string",
-            "enum": [
-              "linear",
-              "easeInQuad",
-              "easeOutQuad",
-              "easeInOutQuad",
-              "easeInCubic",
-              "easeOutCubic",
-              "easeInOutCubic",
-              "easeInQuart",
-              "easeOutQuart",
-              "easeInOutQuart",
-              "easeInQuint",
-              "easeOutQuint",
-              "easeInOutQuint"
-            ],
-            "default": "easeInOutQuad"
-          },
+          "easing": {"$ref":"#easing"},
+          "easing_pitch":{"$ref":"#easing"},
+          "easing_bearing":{"$ref":"#easing"},
+          "easing_center":{"$ref":"#easing"},
+          "easing_altitude":{"$ref":"#easing"},
           "pitch": {
-            "type": "number"
+            "type": "number", "minimum": 0, "maximum": 85
           },
           "bearing": {
-            "type": "number"
+            "type":"number"
           },
           "lookAt": {
             "type": "array",
@@ -84,13 +93,7 @@
             ],
             "minItems": 2,
             "maxItems": 2
-          },
-          "_frame_start": {
-            "type": "number"
-          },
-          "_frame_end": {
-            "type": "number"
-          }
+          } 
         }
       }
     }

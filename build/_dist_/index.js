@@ -5,11 +5,14 @@ import {MinAniMap} from './minanimap/index.js';
 import {FlashIcon} from './flashicon/index.js';
 import './style/minanimap.css.proxy.js';
 import './style/banner_github.css.proxy.js';
-import {map} from './map.js';
+import {map, geocoder} from './map.js';
+//import SunCalc from 'suncalc';
 
 /**
  * Elements
  */
+
+
 
 /* recording */
 const elBtnRecording = document.getElementById('btnRecording');
@@ -46,6 +49,13 @@ const elMsgBoxValidationSteps = document.getElementById(
 );
 const elMsgBoxAutoSave = document.getElementById('msgBoxAutoSave');
 const elSelTheme = document.getElementById('selTheme');
+
+/*
+* Geocoder
+*/
+const elGeoCoder = document.getElementById('geocoder');
+geocoder.addTo(elGeoCoder);
+
 
 /**
  * Setup minanimap
@@ -139,7 +149,8 @@ new MinAniMap(map, stateOrig).then((am) => {
   });
   am.on('pre_rendered', (v)=>{
     elSliderFrame.min = 0;
-    elSliderFrame.max = v.nFrames;
+    elSliderFrame.max = v.nFrames - 1;
+    elSliderFrame.step = 1
   })
   am.on('render', (id)=>{
     elSliderFrame.value = id;
@@ -166,7 +177,7 @@ new MinAniMap(map, stateOrig).then((am) => {
   elBtnPrevious.addEventListener('click', am.previousStep);
   elSliderFrame.addEventListener('input', ()=>{
     am.cancelRender();
-    am.render(elSliderFrame.value*1||0);
+    am.render(elSliderFrame.value*1 || 0);
   })
   /* edit */
   elBtnAddStep.addEventListener('click', ()=>{

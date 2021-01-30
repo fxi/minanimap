@@ -9,7 +9,7 @@ body.purple * {
   --ui_bg_color_transparent: hsla(308, 60%, 20%, 0.4);
   --ui_fg_color: hsla(308, 60%, 80%, 0.95);
   --ui_editor_fg_color: hsla(308, 60%, 80%, 0.95);
-  --ui_editor_bg_color: hsl(308, 46%, 37%, 0.55);
+  --ui_editor_bg_color: hsl(308, 46%, 37%, 1);
   --ui_outline: hsla(308, 60%, 90%, 0.95);
   --ui_border_color: hsl(308deg 45% 35% / 91%);
   --ui_button_color: hsl(308deg 67% 33% / 53%);
@@ -19,7 +19,7 @@ body.sat * {
   --ui_bg_color_transparent: hsla(174, 4%, 46%, 0.4);
   --ui_fg_color: hsl(308deg 21% 91% / 95%);
   --ui_editor_fg_color: hsl(0deg 0% 94% / 95%);
-  --ui_editor_bg_color: hsl(0deg 0% 60% / 63%);
+  --ui_editor_bg_color: hsla(0, 0%, 60%, 1);
   --ui_outline: hsl(0deg 0% 45% / 36%);
   --ui_border_color: hsl(308deg 1% 29% / 91%);
   --ui_button_color: hsl(308deg 12% 14% / 53%);
@@ -28,7 +28,7 @@ body.sat * {
 * {
   font-family: 'Space Mono', monospace;
   color: var(--ui_fg_color);
-  outline-color: var(--ui_outline);
+  outline: var(--ui_outline);
 }
 
 html,
@@ -78,6 +78,7 @@ body {
   position: absolute;
   top: 0;
   justify-content: flex-start;
+  pointer-events: none;
 }
 .group-bottom {
   padding: 10px;
@@ -85,6 +86,7 @@ body {
   position: absolute;
   width: calc(100% - 20px);
   z-index: 2;
+  pointer-events: none;
 }
 #btns-ctrl {
   justify-content: center;
@@ -216,7 +218,7 @@ body {
   transition: backdrop-filter ease-in-out 200ms;
 }
 .progress-recording--container.recording {
-  backdrop-filter: blur(100px);
+  backdrop-filter: blur(20px);
   background-color: var(--ui_bg_color_transparent);
 }
 .progress-recording--container.hide {
@@ -237,6 +239,7 @@ body {
   display: flex;
   flex-direction: column;
   margin-left: 10px;
+padding: 5px;
 }
 .form-group select {
   background: var(--ui_button_color);
@@ -252,6 +255,61 @@ body {
 }
 
 /* Map and mpabox gl */
+
+.form-group .mapboxgl-ctrl-geocoder {
+  background-color: inherit;
+}
+.form-group .mapboxgl-ctrl-geocoder.mapboxgl-ctrl {
+  width:100%;
+  box-shadow:none;
+}
+
+.form-group .mapboxgl-ctrl-geocoder .mapboxgl-ctrl-geocoder--input {
+  background-color: var(--ui_button_color);
+  color: var(--ui_fg_color);
+  border: none;
+  border-radius: 0px;
+}
+.form-group .mapboxgl-ctrl-geocoder .mapboxgl-ctrl-geocoder--input::placeholder  {
+  color: var(--ui_fg_color);
+  opacity:0.5
+}
+
+.form-group .mapboxgl-ctrl-geocoder .mapboxgl-ctrl-geocoder--input:focus {
+  outline:inherit;
+}
+
+.form-group .mapboxgl-ctrl-geocoder  svg.mapboxgl-ctrl-geocoder--icon {
+  fill: var(--ui_fg_color);
+  padding: 3px;
+  padding: 0px;
+  margin: 0px;
+  transform: scale(0.7);
+}
+
+.form-group .mapboxgl-ctrl-geocoder--button {
+  border-radius:50%;
+}
+
+
+.form-group .mapboxgl-ctrl-geocoder  ul.suggestions {
+  position:static;
+  background-color: var(--ui_bg_color);
+  border-radius: 0px;
+}
+
+ .form-group .mapboxgl-ctrl-geocoder .suggestions > .active > a, 
+ .form-group .mapboxgl-ctrl-geocoder .suggestions > li > a:hover {
+    color: var(--ui_fg_color);
+    background-color: var(--ui_button_color);
+    border-radius: 0;
+}
+
+
+.form-group .form-group .mapboxgl-ctrl-geocoder {
+  width: 100%;
+  background-color: var(--ui_bg_color);
+}
 .am .mapboxgl-ctrl-logo {
   filter: opacity(0.5);
 }
@@ -280,6 +338,7 @@ input[type='range'] {
   margin: 5.15px 0;
   background-color: transparent;
   -webkit-appearance: none;
+  pointer-events: auto;
 }
 input[type='range']:focus {
   outline: none;

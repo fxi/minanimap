@@ -1,16 +1,19 @@
 import mapboxgl from '../web_modules/mapbox-gl.js';
 import '../web_modules/mapbox-gl/dist/mapbox-gl.css.proxy.js';
+import MapboxGeocoder from '../web_modules/@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min.js';
+import '../web_modules/@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css.proxy.js';
+
 /*
-* For initial style position.
-* ( Is needed before map loading as default position need it. )
-*/
+ * For initial style position.
+ * ( Is needed before map loading as default position need it. )
+ */
 import {state} from './minanimap/settings.js';
 
 const initStep = state.steps[0];
 
 /**
-* MapBox Token. I will regret this.
-*/
+ * MapBox Token. I will regret this.
+ */
 mapboxgl.accessToken =
   'pk.eyJ1IjoiZnJlZGZ4aSIsImEiOiJja2psOTE5YWgwNm1jMnJxcDhmY25qc2gwIn0.VM7P6iTelL_rFnxTkO7LBQ';
 
@@ -27,8 +30,8 @@ const map = new mapboxgl.Map({
     pitch: initStep.pitch,
     light: {
       intensity: 1,
-      color: 'hsl(59, 0%, 100%)',
-      position: [0.9, 0, 0],
+      color: 'hsl(207, 75%, 11%)',
+      position: [1, 0, 0],
       anchor: 'viewport'
     },
     sources: {
@@ -154,18 +157,59 @@ const map = new mapboxgl.Map({
         }
       },
       {
-        id: 'sky-sat',
+        id: 'sky-sat-orig',
         type: 'sky',
-        layout: {visibility: 'visible'},
+        layout: {visibility: 'none'},
         paint: {
           'sky-type': 'atmosphere',
           'sky-atmosphere-sun': [0.0, 0.0],
           'sky-atmosphere-sun-intensity': 15
         }
+      },
+      {
+        id: 'sky-sat',
+        type: 'sky',
+        layout: {
+          visibility: 'visible'
+        },
+        paint: {
+          'sky-type': 'gradient',
+          'sky-gradient': [
+            'interpolate',
+            ['linear'],
+            ['sky-radial-progress'],
+            0.8,
+            'hsl(213, 34%, 24%)',
+            0.9,
+            'hsl(206, 63%, 54%)',
+            1,
+            'hsl(207, 77%, 11%)'
+          ],
+          'sky-gradient-center': [-160, -45],
+          'sky-gradient-radius': 90
+        }
       }
     ]
   }
 });
+
+const geocoder = new MapboxGeocoder({
+  accessToken: mapboxgl.accessToken,
+  mapboxgl: mapboxgl
+});
+
+geocoder._map = map;
+
+//geocoder.on('result', (e) => {
+  //console.log(e.result);
+  //debugger;
+  //if (e.result.center) {
+    //map.flyTo({center: e.result.center});
+  //}
+  //if (e.result.bbox) {
+    //map.fitBounds(e.result.bbox);
+  //}
+//});
 
 map.on('load', function () {
   // firfox glitch : resize not triggered and wrong center
@@ -176,4 +220,4 @@ map.on('load', function () {
   });
 });
 
-export {map};
+export {map, geocoder};

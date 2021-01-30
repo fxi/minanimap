@@ -7,7 +7,7 @@
     <meta
       name="description"
       content="mapbox gl experiment animation step by step"
-    />
+      />
     <title>Minanimap</title>
   </head>
   <body class="am sat">
@@ -19,21 +19,21 @@
             title="stop recording"
             class="btn-circle"
             id="btnStopRecording"
-          >
+            >
             <i class="fas fa-stop"></i>
           </button>
           <button
             title="Download file"
             class="btn-circle hide"
             id="btnDownload"
-          >
+            >
             <i class="fas fa-cloud-download-alt"></i>
           </button>
           <button
             title="Close recording panel"
             class="btn-circle"
             id="btnCloseRecording"
-          >
+            >
             <i class="fas fa-times"></i>
           </button>
         </div>
@@ -47,25 +47,25 @@
     <!-- Buttons top : toggle configuration panel -->
     <div class="btns group-top">
       <div class="btns">
-      <button title="Edit steps" class="btn-circle" id="btnEdit">
-        <i class="fas fa-cog"></i>
-      </button>
+        <button title="Edit steps" class="btn-circle" id="btnEdit">
+          <i class="fas fa-cog"></i>
+        </button>
       </div>
     </div>
 
     <!-- Buttons bottom : play, pause, previous next -->
     <div class="group-bottom">
       <div class="btns">
-      <button title="Previous step" class="btn-circle paused" id="btnPrevious">
-        <i class="fas fa-step-backward"></i>
-      </button>
-      <button title="Play/Pause" class="btn-circle paused" id="btnPlay">
-        <i class="fas fa-play"></i>
-        <i class="fas fa-pause"></i>
-      </button>
-      <button title="Next step" class="btn-circle paused" id="btnNext">
-        <i class="fas fa-step-forward"></i>
-      </button>
+        <button title="Previous step" class="btn-circle paused" id="btnPrevious">
+          <i class="fas fa-step-backward"></i>
+        </button>
+        <button title="Play/Pause" class="btn-circle paused" id="btnPlay">
+          <i class="fas fa-play"></i>
+          <i class="fas fa-pause"></i>
+        </button>
+        <button title="Next step" class="btn-circle paused" id="btnNext">
+          <i class="fas fa-step-forward"></i>
+        </button>
       </div>
       <input id="sliderFrame" type="range" min=0 max=7200 step=10></input>
     </div>
@@ -75,33 +75,47 @@
       <div class="panel hide" id="panelEdit">
         <div class="editor-container">
           <div class="editor-group">
+            <div class="form-group">
+              <label for="selTheme">Theme</label>
+              <select id="selTheme">
+                <option value="purple">Purple</option>
+                <option value="sat" selected="true">Satelite</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="geocoder">Find location</label>
+              <div id="geocoder" ></div>
+            </div>
+          </div>
+
+          <div class="editor-group">
             <div class="btns btns-config">
               <button
                 title="Remove all steps"
                 class="btn-circle"
                 id="btnDiscard"
-              >
+                >
                 <i class="fas fa-trash"></i>
               </button>
               <button
                 title="Reset defaut steps"
                 class="btn-circle"
                 id="btnReset"
-              >
+                >
                 <i class="fas fa-undo"></i>
               </button>
               <button
                 title="Copy url to clipboard"
                 class="btn-circle"
                 id="btnCopyUrl"
-              >
+                >
                 <i class="fas fa-clipboard"></i>
               </button>
               <button
                 title="Add a new step at the end, using current camera position"
                 class="btn-circle"
                 id="btnAddStep"
-              >
+                >
                 <i class="fas fa-plus"></i>
               </button>
             </div>
@@ -112,7 +126,7 @@
                 rows="20"
                 class="code"
                 id="editorSteps"
-              ></textarea>
+                ></textarea>
             </details>
             <span class="msg-box" id="msgBoxValidationSteps"></span>
             <span class="msg-box" id="msgBoxAutoSave"></span>
@@ -123,7 +137,7 @@
                 title="Start recording"
                 class="btn-circle stopped"
                 id="btnRecording"
-              >
+                >
                 <i class="fas fa-video"></i>
               </button>
             </div>
@@ -134,19 +148,10 @@
                 rows="20"
                 class="code"
                 id="editorVideo"
-              ></textarea>
+                ></textarea>
             </details>
             <span class="msg-box" id="msgBoxValidationVideo"></span>
             <span class="msg-box" id="msgBoxRecording"></span>
-          </div>
-          <div class="editor-group">
-            <div class="form-group">
-              <label for="selTheme">Theme</label>
-              <select id="selTheme">
-                <option value="purple">Purple</option>
-                <option value="sat" selected="true">Satelite</option>
-              </select>
-            </div>
           </div>
         </div>
       </div>
@@ -158,32 +163,32 @@
       class="github-corner"
       aria-label="View source on GitHub"
       ><svg
-        width="80"
-        height="80"
-        viewBox="0 0 250 250"
-        style="
-          fill: #151513;
-          color: #fff;
-          position: absolute;
-          top: 0;
-          border: 0;
-          right: 0;
-        "
-        aria-hidden="true"
-      >
-        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
-        <path
-          d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
-          fill="currentColor"
-          style="transform-origin: 130px 106px"
-          class="octo-arm"
-        ></path>
-        <path
-          d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
-          fill="currentColor"
-          class="octo-body"
-        ></path></svg
-    ></a>
+         width="80"
+         height="80"
+         viewBox="0 0 250 250"
+         style="
+                fill: #151513;
+                color: #fff;
+                position: absolute;
+                top: 0;
+                border: 0;
+                right: 0;
+                "
+         aria-hidden="true"
+         >
+         <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+         <path
+           d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+           fill="currentColor"
+           style="transform-origin: 130px 106px"
+           class="octo-arm"
+           ></path>
+         <path
+           d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+           fill="currentColor"
+           class="octo-body"
+           ></path></svg
+         ></a>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <script type="module" src="_dist_/index.js"></script>
   </body>
